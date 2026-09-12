@@ -1,0 +1,7 @@
+.route-report{margin-top:1.1rem;padding-top:1.1rem;border-top:1px solid var(--line,#2a3d5f)}
+.route-report h3{margin:0;font-size:1.05rem}.route-report .panel-heading{margin-bottom:.8rem}
+#routeCanvas{display:block;width:100%;height:auto;min-height:190px;border:1px solid var(--line,#2a3d5f);border-radius:14px;background:#09182e}
+.route-endpoints{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-top:.7rem;color:var(--muted,#9eacc5);font-size:.82rem}.route-endpoints b{color:var(--text,#f4f7fc)}
+@media(max-width:620px){.route-report .panel-heading{align-items:flex-start;gap:.65rem;flex-direction:column}.route-report .button{width:100%}.route-endpoints{flex-direction:column;gap:.35rem}}
+.quality-check{margin-top:.8rem;padding:.75rem .9rem;border:1px solid var(--line,#2a3d5f);border-radius:10px;font-size:.88rem;color:var(--muted,#9eacc5);line-height:1.45}.quality-check.good{border-color:#3ac7a5;color:#b8f2df}.quality-check.warn{border-color:#ff9a6e;color:#ffd1c1}
+.analysis-source .source-button{display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.2}

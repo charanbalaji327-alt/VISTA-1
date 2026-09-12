@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VISTA — AI Motion & Fitness Tracker</title>
+<meta name="theme-color" content="#09172f">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="tracking.css">
+<link rel="stylesheet" href="upgrade.css">
+<link rel="stylesheet" href="local-tools.css">
+</head>
+<body>
+<div id="opening" class="opening">
+  <div class="opening-logo"><div class="triangle">▲</div><div class="opening-word">VISTA</div></div>
+</div>
+
+<div id="app" class="site" hidden>
+<header class="topbar">
+  <a class="brand" href="#home"><span>▲</span> VISTA</a>
+  <nav class="nav">
+    <button data-nav="home" class="nav-btn active">Dashboard</button>
+    <button data-nav="workout" class="nav-btn">Workout</button>
+    <button data-nav="progress" class="nav-btn">Progress</button>
+    <button data-nav="nutrition" class="nav-btn">Nutrition</button>
+  </nav>
+  <div class="topbar-actions"><button id="themeToggle" class="theme-toggle" type="button" aria-label="Switch theme">Light theme</button><button id="profileChip" class="profile-chip" type="button" title="Open profile" aria-label="Open profile">P</button></div>
+</header>
+
+<section id="profileSetup" class="profile-setup" hidden>
+  <div class="setup-card profile-modal-card">
+    <div class="profile-modal-head"><div><p class="kicker">PROFILE</p><h2>VISTA Profile</h2></div><button id="closeProfileButton" class="button secondary profile-close" type="button">Close</button></div>
+    <p class="muted">Update your profile, goals and body details whenever your routine changes.</p>
+    <form id="profileForm">
+      <label>Full Name<input id="profileName" required placeholder="Alex Morgan"></label>
+      <div class="form-grid">
+        <label>Age<input id="profileAge" type="number" min="1" required placeholder="28"></label>
+        <label>Height (cm)<input id="profileHeight" type="number" min="1" required placeholder="175"></label>
+      </div>
+      <label>Weight (kg)<input id="profileWeight" type="number" min="1" required placeholder="70"></label>
+      <div class="form-grid"><label>Sex for energy estimate<select id="profileSex"><option value="">Prefer not to say</option><option value="female">Female</option><option value="male">Male</option></select></label><label>Activity level<select id="profileActivity"><option value="1.2">Mostly seated</option><option value="1.375">Lightly active</option><option value="1.55" selected>Moderately active</option><option value="1.725">Very active</option></select></label></div>
+      <label>Weekly workout target<input id="weeklyTarget" type="number" min="1" max="14" value="4"></label>
+      <p id="profileError" class="form-error"></p>
+      <button class="button primary">Save profile</button>
+    </form>
+  </div>
+</section>
+
+<main id="main" hidden>
+<section id="home" class="page active-page">
+  <section class="hero">
+    <div><p class="kicker">AI FITNESS COMMAND CENTER</p><h1>Welcome, <em id="profileSummary">Athlete</em></h1>
+    <p class="muted">Track movement, inspect exercise form, plan workouts and turn every session into measurable progress.</p></div>
+    <div class="status-card"><span class="status-dot"></span><div><b>Ready to train</b><small id="sensorStatus">Your session tools are ready</small></div></div>
+  </section>
+
+  <div class="metric-grid">
+    <div class="metric"><small>WEEKLY WORKOUTS</small><strong id="dashWorkouts">0</strong><span id="dashWorkoutGoal">/ 4 goal</span></div>
+    <div class="metric"><small>FORM SCORE</small><strong id="dashScore">—</strong><span>latest analysis</span></div>
+    <div class="metric"><small>DISTANCE</small><strong id="dashDistance">0.00</strong><span>km this week</span></div>
+    <div class="metric"><small>WATER</small><strong id="dashWater">0.00</strong><span>litres today</span></div>
+  </div>
+
+  <div class="grid dashboard-insights">
+    <section class="panel">
+      <div class="panel-heading"><div><h2>Personalized focus</h2><p class="muted">Recommendations based on your recent workout history.</p></div><span class="pill">ADAPTIVE</span></div>
+      <div id="personalizedFocus" class="insight-card">Complete a workout to receive a personalized recommendation.</div>
+    </section>
+    <section class="panel">
+      <div class="panel-heading"><div><h2>Achievements</h2><p class="muted">Milestones earned from your training history.</p></div></div>
+      <div id="achievementGrid" class="achievement-grid"></div>
+    </section>
+  </div>
+
+  <div class="grid">
+    <section class="panel route-panel">
+      <div class="panel-heading"><div><h2>Live Route Tracking</h2><p class="muted">GPS distance, speed and route history.</p></div><span id="locationState" class="pill">Location idle</span></div>
+      <div class="map-wrap"><iframe id="mapFrame" title="Location Map"></iframe><div id="mapOverlay" class="map-overlay">GPS location offline</div></div>
+      <div class="location-readout">
+        <div>Lat <b id="latitude">0.000000</b></div><div>Lon <b id="longitude">0.000000</b></div>
+        <div>Distance <b id="distance">0.00 km</b></div><div>Speed <b id="speed">0.0 km/h</b></div>
+      </div>
+      <div class="goal-row"><label>Distance goal <input id="distanceGoal" type="number" value="1" min=".1" step=".5"> km</label><strong id="paceReadout">—</strong></div>
+      <div class="route-actions"><button id="trackButton" class="button primary">Start tracking</button><button id="openMapButton" class="button secondary">Open OSM</button><button id="resetTrackButton" class="button secondary" hidden>Reset tracking</button></div>
+      <p id="trackingFeedback" class="feedback"></p>
+      <section id="routeReport" class="route-report" hidden aria-live="polite">
+        <div class="panel-heading"><div><h3>Completed route</h3><p id="routeSummary" class="muted">Your recorded GPS path.</p></div><button id="downloadRouteImageButton" class="button secondary" type="button">Save route image</button></div>
+        <canvas id="routeCanvas" width="1000" height="500" aria-label="Recorded GPS route trace"></canvas>
+        <div class="route-endpoints"><span>Start: <b id="routeStart">—</b></span><span>End: <b id="routeEnd">—</b></span></div>
+      </section>
+    </section>
+
+    <section class="panel quick-analysis">
+      <div class="panel-heading"><div><h2>Form Review</h2><p class="muted">Pick a movement, then use your camera or a video to review your technique.</p></div><span class="pill">FORM CHECK</span></div>
+      <div class="mini-feature-grid"><div><b>Video review</b><small>Camera or upload</small></div><div><b>Body position</b><small>Movement tracking</small></div><div><b>Rep counting</b><small>For supported exercises</small></div><div><b>Coaching notes</b><small>Clear next steps</small></div></div>
+      <button id="openWorkoutButton" class="button primary full">Explore activities</button>
+    </section>
+  </div>
+
+  <section class="panel library">
+    <div class="panel-heading"><div><h2>Activity & Discipline Catalogue</h2><p class="muted">Select an option to open Form Review.</p></div></div>
+    <div class="category-tabs">
+      <button class="selected" data-category="all">All</button><button data-category="Cardio">Cardio</button><button data-category="Strength">Strength</button><button data-category="Flexibility">Flexibility</button>
+    </div>
+    <div class="discipline-grid">
+      <button class="discipline-card" data-category="Cardio" data-exercise="Running"><b>Outdoor Running</b><small>Pace, cadence and distance.</small></button>
+      <button class="discipline-card" data-category="Strength" data-exercise="Squats"><b>Bodyweight Squats</b><small>Depth, knee and hip alignment.</small></button>
+      <button class="discipline-card" data-category="Strength" data-exercise="Push-Ups"><b>Push-Ups</b><small>Depth, elbow and body alignment.</small></button>
+      <button class="discipline-card" data-category="Strength" data-exercise="Lunges"><b>Lunges</b><small>Knee, stride and torso control.</small></button>
+      <button class="discipline-card" data-category="Strength" data-exercise="Plank"><b>Plank</b><small>Hip height and trunk alignment.</small></button>
+      <button class="discipline-card" data-category="Flexibility" data-exercise="Yoga Flow"><b>Yoga Flow</b><small>Hold and transition stability.</small></button>
+      <button class="discipline-card" data-category="Cardio" data-exercise="Jumping Jacks"><b>Jumping Jacks</b><small>Rhythm and full-body movement.</small></button>
+    </div>
+    <p id="movementFeedback" class="feedback"></p>
+  </section>
+</section>
+
+<section id="workout" class="page">
+  <div class="section-head"><div><p class="kicker">FORM REVIEW</p><h2 id="selectedExerciseTitle">Push-Ups</h2><p id="selectedExerciseHint" class="muted">Load a video or use your webcam to begin.</p></div><button id="backHome" class="button secondary">Back to dashboard</button></div>
+  <div class="grid">
+    <section class="panel">
+      <div class="analysis-source"><button id="cameraButton" class="source-button">Use Webcam</button><label class="source-button">Upload Video<input type="file" id="videoInput" accept="video/*" hidden></label></div>
+      <div class="analysis-options">
+        <label>Coaching level<select id="difficultyLevel"><option value="beginner">Beginner</option><option value="intermediate" selected>Intermediate</option><option value="advanced">Advanced</option></select></label>
+        <label class="toggle-option"><input id="voiceCoachToggle" type="checkbox"> Voice coaching</label>
+        <label class="toggle-option"><input id="skeletonToggle" type="checkbox" checked> Live skeleton</label>
+        <button id="calibrateButton" class="button secondary" type="button">Calibrate camera</button>
+      </div>
+      <div id="calibrationStatus" class="calibration-status">Calibration is recommended before live coaching.</div>
+      <aside id="cameraGuide" class="camera-guide" aria-live="polite"></aside>
+      <div class="video-stage">
+        <video id="analysisVideo" playsinline muted hidden></video>
+        <canvas id="poseCanvas" aria-label="Live pose skeleton"></canvas>
+        <div id="liveHud" class="live-hud" hidden>
+          <div><small>LIVE REPS</small><strong id="liveRepCount">0</strong></div>
+          <div><small>FORM</small><strong id="liveFormScore">—</strong></div>
+          <div><small>STATUS</small><strong id="liveRepStatus">Ready</strong></div>
+        </div>
+        <div id="videoPlaceholder" class="video-placeholder"><span>▶</span><b>Video preview</b><small>Select an activity and load a video.</small></div>
+      </div>
+      <div class="video-controls"><button id="analyzeButton" class="button primary" disabled>Analyze video</button><button id="liveAnalyzeButton" class="button secondary" disabled>Live coaching</button><button id="demoReportButton" class="button secondary" type="button">View demo report</button></div>
+      <div class="analysis-progress"><div id="analysisProgressBar"></div></div>
+      <div id="qualityCheck" class="quality-check" aria-live="polite">Quality check: load a video or webcam feed first.</div>
+      <p id="videoFeedback" class="feedback"></p>
+    </section>
+
+    <section class="panel report-panel" id="reportPanel">
+      <div class="panel-heading"><div><h2>Motion Analysis Report</h2><p id="analysisState" class="muted">Awaiting source</p><p id="analysisVerification" class="feedback"></p></div><span id="scoreBadge" class="score-badge">—</span></div>
+      <div id="reportEmpty" class="empty-state"><div>REPORT</div><b>Your report will appear here</b><span>VISTA will estimate movement quality, repetitions, tempo and exercise-specific form cues.</span></div>
+      <div id="reportContent" hidden>
+        <div class="report-stats">
+          <div><small>REPS</small><strong id="reportReps">—</strong></div><div><small>GOOD REPS</small><strong id="reportGoodReps">—</strong></div><div><small>CONSISTENCY</small><strong id="reportConsistency">—</strong></div><div><small>DURATION</small><strong id="reportDuration">—</strong></div>
+        </div>
+        <div class="report-block"><h3>What we found</h3><ul id="findingsList"></ul></div>
+        <div class="report-block"><h3>Coach recommendations</h3><ul id="recommendationsList"></ul></div>
+        <div class="report-block"><h3>Exercise metrics</h3><div id="exerciseMetrics" class="metric-list"></div></div>
+        <div id="comparisonBlock" class="report-block" hidden><h3>Previous session comparison</h3><div id="comparisonContent" class="comparison-card"></div></div>
+        <div class="report-actions"><button id="saveReportButton" class="button primary">Save workout</button><button id="openReportButton" class="button secondary">Open report</button><button id="downloadReportButton" class="button secondary">Save report to Desktop</button><button id="pdfReportButton" class="button secondary">Save PDF</button></div>
+        <p class="disclaimer">Pose-based metrics are estimates from the selected video and camera viewpoint. They are not medical advice.</p>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel live-coach" id="liveCoachPanel" hidden>
+    <div class="panel-heading"><div><h2>Live VISTA Coach</h2><p class="muted">Real-time pose analysis, repetition counting and form feedback.</p></div><span id="liveCoachStatus" class="pill">Offline</span></div>
+    <div class="live-stats">
+      <div><small>REPETITIONS</small><strong id="livePanelRepCount">0</strong></div>
+      <div><small>FORM SCORE</small><strong id="livePanelFormScore">—</strong></div>
+      <div><small>PHASE</small><strong id="livePanelPhase">Ready</strong></div>
+      <div><small>SESSION TIME</small><strong id="liveSessionTime">00:00</strong></div>
+    </div>
+    <div class="coach-message" id="coachMessage">Start live coaching to see feedback.</div>
+    <div class="live-actions"><span id="voiceStatus" class="pill">Voice off</span><button id="resetLiveButton" class="button secondary">Reset live count</button></div>
+  </section>
+  <section class="grid">
+    <section class="panel"><div class="panel-heading"><div><h2>Exercise guide</h2><p class="muted">Practical setup, benefits and common mistakes.</p></div></div><div id="exerciseGuide" class="instruction-card"></div></section>
+    <section class="panel"><div class="panel-heading"><div><h2>Session timer</h2><p class="muted">Use for sets, rests or a workout block.</p></div></div><div id="timerReadout" class="timer-readout">00:00</div><div class="timer-controls"><input id="timerMinutes" type="number" min="1" max="180" value="1" aria-label="Timer minutes"><button id="startTimerButton" class="button primary" type="button">Start</button><button id="resetTimerButton" class="button secondary" type="button">Reset</button></div><p id="timerFeedback" class="feedback">Set a duration, then start.</p></section>
+  </section>
+  <section class="panel"><div class="panel-heading"><div><h2>Workout builder</h2><p class="muted">Build a session with your own sets, repetitions and rest.</p></div></div><form id="workoutBuilderForm" class="workout-builder"><select id="builderExercise"><option>Push-Ups</option><option>Squats</option><option>Lunges</option><option>Plank</option><option>Jumping Jacks</option><option>Running</option><option>Yoga Flow</option></select><input id="builderSets" type="number" min="1" value="3" placeholder="Sets"><input id="builderReps" type="number" min="1" value="10" placeholder="Reps / seconds"><input id="builderRest" type="number" min="0" value="60" placeholder="Rest seconds"><button class="button primary">Add to plan</button></form><div id="workoutPlanList" class="plan-list"></div></section>
+</section>
+
+<section id="progress" class="page">
+  <div class="section-head"><div><p class="kicker">PERFORMANCE</p><h2>Progress & History</h2><p class="muted">Track how your training changes over time.</p></div></div>
+  <div class="metric-grid">
+    <div class="metric"><small>SESSIONS</small><strong id="historyCount">0</strong><span>saved workouts</span></div>
+    <div class="metric"><small>AVERAGE SCORE</small><strong id="averageScore">—</strong><span>form quality</span></div>
+    <div class="metric"><small>TOTAL REPS</small><strong id="totalReps">0</strong><span>tracked reps</span></div>
+    <div class="metric"><small>BEST SCORE</small><strong id="bestScore">—</strong><span>personal best</span></div>
+    <div class="metric"><small>CURRENT STREAK</small><strong id="currentStreak">0</strong><span>days</span></div>
+  </div>
+  <div class="grid">
+    <section class="panel"><h2>Form score trend</h2><div id="scoreChart" class="chart"></div></section>
+    <section class="panel"><h2>Weekly activity</h2><div id="weeklyChart" class="bar-chart"></div></section>
+  </div>
+  <section class="panel"><div class="panel-heading"><div><h2>Exercise comparison</h2><p class="muted">Compare your latest result with your previous session for the same exercise.</p></div></div><div id="progressComparison" class="comparison-card">No saved workouts yet.</div></section>
+  <section class="panel"><div class="panel-heading"><h2>Workout history</h2><div class="history-actions"><button id="exportHistory" class="button secondary">Export CSV</button><button id="clearHistory" class="button danger">Clear history</button></div></div><div id="historyList" class="history-list"></div></section>
+  <section class="panel"><div class="panel-heading"><div><h2>Saved routes</h2><p class="muted">Review your completed GPS sessions.</p></div><button id="exportRoutesButton" class="button secondary" type="button">Export GPX</button></div><div id="routeHistoryList" class="history-list"></div></section>
+  <section class="panel coach-workspace"><div class="panel-heading"><div><h2>Coach workspace</h2><p class="muted">Capture assignments and coaching notes for the next session.</p></div></div><form id="coachForm" class="coach-form"><input id="coachAssignment" placeholder="Assignment, e.g. 3 × 10 controlled squats"><textarea id="coachNote" rows="2" placeholder="Coach note for this athlete"></textarea><button class="button primary">Save coach note</button></form><div id="coachWorkspaceList" class="coach-workspace-list"></div></section>
+  <section class="grid"><section class="panel"><div class="panel-heading"><div><h2>Body & energy estimates</h2><p class="muted">Based on your profile and intended as a general guide, not medical advice.</p></div></div><div id="bodyEstimates" class="estimate-grid"></div></section><section class="panel"><div class="panel-heading"><div><h2>Personal records</h2><p class="muted">Your best results from completed sessions.</p></div></div><div id="personalRecords" class="estimate-grid"></div></section></section>
+  <section class="panel"><div class="panel-heading"><div><h2>Training streak</h2><p class="muted">Your last 28 days of saved activity.</p></div></div><div id="streakCalendar" class="streak-calendar"></div></section>
+  <section class="panel privacy-panel"><div class="panel-heading"><div><h2>Progress backup</h2><p class="muted">Export a copy of your progress or restore a previous backup.</p></div></div><div class="privacy-actions"><button id="backupDataButton" class="button secondary" type="button">Backup VISTA data</button><label class="button secondary">Restore backup<input id="restoreDataInput" type="file" accept="application/json" hidden></label><button id="clearRoutesButton" class="button danger" type="button">Clear saved routes</button><button id="clearLocalDataButton" class="button danger" type="button">Clear all progress</button></div><p id="privacyFeedback" class="feedback"></p></section>
+</section>
+
+<section id="nutrition" class="page">
+  <div class="section-head"><div><p class="kicker">RECOVERY</p><h2>Nutrition & Reminders</h2><p class="muted">Keep hydration, meals and targets visible alongside training.</p></div></div>
+  <div class="grid">
+    <section class="panel">
+      <h2>Water intake</h2><div class="water-ring"><strong id="waterRingValue">0%</strong><span id="waterRingLabel">0.00 / 3.00 L</span></div>
+      <form id="waterForm" class="compact-form"><input id="waterInput" type="number" min="50" step="50" placeholder="Amount in ml"><button class="button secondary">Add water</button></form>
+      <label class="inline-label">Daily target (L)<input id="waterGoal" type="number" min="0.5" step=".1" value="3"></label>
+      <button id="waterReminderButton" class="button secondary" type="button">Enable 30-minute water reminders</button><p id="waterReminderStatus" class="feedback">Reminders are off.</p>
+    </section>
+    <section class="panel">
+      <h2>Meal reminders</h2>
+      <form id="dietForm" class="diet-form"><input id="mealInput" placeholder="Meal, e.g. Protein Shake"><input id="mealTimeInput" type="time"><button class="button primary">Add</button></form>
+      <ul id="reminderList" class="reminder-list"></ul>
+    </section>
+  </div>
+  <section class="panel"><h2>Daily nutrition targets</h2><div class="nutrition-targets"><label>Calories<input id="calorieGoal" type="number" value="2400"></label><label>Protein (g)<input id="proteinGoal" type="number" value="150"></label><label>Carbs (g)<input id="carbGoal" type="number" value="280"></label><label>Fat (g)<input id="fatGoal" type="number" value="75"></label></div><button id="saveNutrition" class="button primary">Save targets</button><p id="nutritionFeedback" class="feedback"></p></section>
+  <section class="grid"><section class="panel"><h2>Goal planner</h2><form id="goalPlannerForm" class="goal-planner"><label>Weight goal (kg)<input id="weightGoal" type="number" min="1" step=".1"></label><label>Weekly sessions<input id="sessionGoal" type="number" min="1" max="14"></label><label>Weekly distance (km)<input id="weeklyDistanceGoal" type="number" min="0" step=".5"></label><button class="button primary">Save goals</button></form><p id="goalPlannerFeedback" class="feedback"></p></section><section class="panel"><h2>Session reflection</h2><form id="reflectionForm" class="reflection-form"><select id="moodInput"><option value="Energized">Energized</option><option value="Good">Good</option><option value="Tired">Tired</option><option value="Sore">Sore</option></select><textarea id="reflectionNote" rows="4" placeholder="How did this session feel?"></textarea><button class="button primary">Save reflection</button></form><div id="reflectionList" class="reflection-list"></div></section></section>
+</section>
+</main>
+</div>
+
+<div id="reportModal" class="report-modal" hidden>
+  <div class="report-modal-backdrop" data-close-report></div>
+  <section class="report-modal-card" role="dialog" aria-modal="true" aria-labelledby="reportModalTitle">
+    <div class="report-modal-header">
+      <div><p class="kicker">VISTA REPORT</p><h2 id="reportModalTitle">Motion Analysis Report</h2><p id="reportModalMeta" class="muted"></p></div>
+      <button id="closeReportButton" class="modal-close" aria-label="Close report">Close</button>
+    </div>
+    <div id="modalReportBody" class="modal-report-body"></div>
+    <div class="report-modal-actions">
+      <button id="modalSaveDesktopButton" class="button primary">Save to Desktop</button>
+      <button id="modalPrintButton" class="button secondary">Print / Save as PDF</button>
+      <button id="modalCloseButton" class="button secondary">Close</button>
+    </div>
+    <p class="disclaimer">Pose-based metrics are estimates from the selected video and camera viewpoint. They are not medical advice.</p>
+  </section>
+</div>
+
+<script type="module" src="app.js?v=5"></script>
+<script type="module" src="local-tools.js?v=3"></script>
+</body>
+</html>

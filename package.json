@@ -1,0 +1,9 @@
+{
+  "name": "vista-ultimate",
+  "version": "1.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "py -m http.server 4173 --directory .",
+    "start": "py -m http.server 4173 --directory ."
+  }
+}
